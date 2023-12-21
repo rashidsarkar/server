@@ -51,8 +51,12 @@ async function run() {
       }
     });
     app.get("/api/allTask", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+
       try {
-        const tasks = await taskDatabase.find({}).toArray();
+        const filter = email ? { email: email } : {};
+        const tasks = await taskDatabase.find(filter).toArray();
 
         res.send(tasks);
       } catch (error) {
@@ -60,6 +64,21 @@ async function run() {
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
+
+    app.delete("/api/deleteTask/:id", async (req, res) => {
+      const taskId = req.params.id;
+      console.log(taskId);
+
+      try {
+        const filter = { _id: new ObjectId(taskId) };
+        const result = await taskDatabase.deleteOne(filter);
+        res.send(result);
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
     app.patch("/api/updateTaskStatus/:id", async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
@@ -72,7 +91,7 @@ async function run() {
 
         // Update task status in the database
         const updatedTask = await taskDatabase.findOneAndUpdate(
-          { _id: ObjectId(id) },
+          { _id: new ObjectId(id) },
           { $set: { status } },
           { returnDocument: "after" }
         );
