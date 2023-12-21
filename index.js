@@ -26,8 +26,67 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+    // const taskDatabase = client.db("taskDatabaseDB").collection("task");
     const taskDatabase = client.db("taskDatabaseDB").collection("task");
 
+    // api
+    app.post("/tasks", async (req, res) => {
+      try {
+        const newTask = {
+          title: req.body.title,
+          description: req.body.description,
+          deadline: req.body.deadline,
+          email: req.body.email,
+          priority: req.body.priority,
+          status: "To-Do", // Set initial status to "To-Do"
+        };
+
+        const result = await taskDatabase.insertOne(newTask);
+
+        // console.log(result);
+        res.send(result);
+      } catch (error) {
+        console.error("Error adding task:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+    app.get("/api/allTask", async (req, res) => {
+      try {
+        const tasks = await taskDatabase.find({}).toArray();
+
+        res.send(tasks);
+      } catch (error) {
+        console.error("Error fetching all tasks:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+    app.patch("/api/updateTaskStatus/:id", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      try {
+        // Validate input
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).json({ error: "Invalid task ID" });
+        }
+
+        // Update task status in the database
+        const updatedTask = await taskDatabase.findOneAndUpdate(
+          { _id: ObjectId(id) },
+          { $set: { status } },
+          { returnDocument: "after" }
+        );
+
+        if (!updatedTask) {
+          return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.send(updatedTask);
+      } catch (error) {
+        console.error("Error updating task status:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
