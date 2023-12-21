@@ -64,6 +64,19 @@ async function run() {
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
+    app.get("/api/singleTask/:id", async (req, res) => {
+      const id = req.params.id;
+
+      try {
+        const filter = { _id: new ObjectId(id) };
+        const tasks = await taskDatabase.findOne(filter);
+
+        res.send(tasks);
+      } catch (error) {
+        console.error("Error fetching all tasks:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
 
     app.delete("/api/deleteTask/:id", async (req, res) => {
       const taskId = req.params.id;
@@ -81,7 +94,7 @@ async function run() {
     app.patch("/api/editTask/:id", async (req, res) => {
       const taskId = req.params.id;
       const { title, description, deadline, priority, status } = req.body;
-
+      console.log(taskId, title);
       try {
         const filter = { _id: new ObjectId(taskId) };
         const update = {
@@ -90,19 +103,11 @@ async function run() {
             description,
             deadline,
             priority,
-            status,
           },
         };
 
         const result = await taskDatabase.updateOne(filter, update);
-
-        if (result.modifiedCount === 1) {
-          res
-            .status(200)
-            .json({ success: true, message: "Task updated successfully" });
-        } else {
-          res.status(404).json({ success: false, message: "Task not found" });
-        }
+        res.send(result);
       } catch (error) {
         console.error("Error updating task:", error);
         res.status(500).json({ error: "Internal Server Error" });
