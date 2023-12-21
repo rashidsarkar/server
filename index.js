@@ -78,6 +78,36 @@ async function run() {
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
+    app.patch("/api/editTask/:id", async (req, res) => {
+      const taskId = req.params.id;
+      const { title, description, deadline, priority, status } = req.body;
+
+      try {
+        const filter = { _id: new ObjectId(taskId) };
+        const update = {
+          $set: {
+            title,
+            description,
+            deadline,
+            priority,
+            status,
+          },
+        };
+
+        const result = await taskDatabase.updateOne(filter, update);
+
+        if (result.modifiedCount === 1) {
+          res
+            .status(200)
+            .json({ success: true, message: "Task updated successfully" });
+        } else {
+          res.status(404).json({ success: false, message: "Task not found" });
+        }
+      } catch (error) {
+        console.error("Error updating task:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
 
     app.patch("/api/updateTaskStatus/:id", async (req, res) => {
       const { id } = req.params;
